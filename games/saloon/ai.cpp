@@ -86,7 +86,7 @@ bool AI::run_turn()
 
     std::cout << "Start of my turn: " << this->game->current_turn << std::endl;
 
-    // Find the active cowboy to try to do things with it
+    // Grab one of the cowboys(units) and try to do things with him
     Cowboy active_cowboy = nullptr;
     for(int i = 0; i < this->player->cowboys.size(); i++)
     {
@@ -95,6 +95,7 @@ bool AI::run_turn()
         // if this cowboy is not dead then make him our active cowboy we will try to control
         if(!cowboy->is_dead)
         {
+            std::cout << "Cowboy is not dead" << std::endl;
             active_cowboy = cowboy;
             break;
         }
@@ -126,94 +127,28 @@ bool AI::run_turn()
     }
 
     // Now lets use him
-    if(active_cowboy)
+    if(active_cowboy && !active_cowboy->is_dead)
     {
-        // 2. Try to move to a piano.
+        // Try to move the cowboy north
+        std::cout << "test 1" << std::endl;
+        Tile new_tile = active_cowboy->tile->tile_north;
+        std::cout << "test 2" << std::endl;
 
-        // Find a piano.
-        Furnishing piano = nullptr;
-        for(int i = 0; i < this->game->furnishings.size(); i++)
+        std::cout << "new_tile->is_pathable = " << new_tile->is_pathable() << std::endl;
+
+        if(active_cowboy->can_move && new_tile->is_pathable())
         {
-            Furnishing furnishing = this->game->furnishings[i];
-
-            if(furnishing->is_piano && !furnishing->is_destroyed)
-            {
-                piano = furnishing;
-                break;
-            }
+            std::cout << "test 3" << std::endl;
+            active_cowboy->move(new_tile);
+            std::cout << "test 4" << std::endl;
         }
 
-        // There will always be pianos or the game will end. No need to check for existence.
-        // Attempt to move toward the piano by finding a path.
-        if(active_cowboy->can_move && !active_cowboy->is_dead)
+        Tile some_tile = active_cowboy->tile->tile_west;
+
+        if (!some_tile->is_balcony)
         {
-            std::cout << "Trying to use Cowboy #" << active_cowboy->id << std::endl;
-
-            // Find a path of tiles to the piano from our active cowboy's tile
-            std::vector<Tile> path = this->find_path(active_cowboy->tile, piano->tile);
-
-            // if there is a path, move along it
-            //      length 0 means no path could be found to the tile
-            //      length 1 means the piano is adjacent, and we can't move onto the same tile as the piano
-            if(path.size() > 1)
-            {
-                std::cout << "2. Moving to Tile #" << path[0]->id << std::endl;
-                active_cowboy->move(path[0]);
-            }
-        }
-
-        // 3. Try to play a nearby piano.
-        if(!active_cowboy->is_dead && active_cowboy->turns_busy == 0)
-        {
-            std::vector<Tile> neighbors = active_cowboy->tile->get_neighbors();
-
-            for(int i = 0; i < neighbors.size(); i++) {
-                Tile neighbor = neighbors[i];
-
-                if(neighbor->furnishing && neighbor->furnishing->is_piano)
-                {
-                    std::cout << "3. Playing piano (Furnishing) #" << neighbor->furnishing->id << std::endl;
-                    active_cowboy->play(neighbor->furnishing);
-                    break;
-                }
-            }
-        }
-
-        // 4. Try to act with active cowboy
-        if(!active_cowboy->is_dead && active_cowboy->turns_busy == 0)
-        {
-            // Get a random neighboring tile.
-            std::vector<Tile> neighbors = active_cowboy->tile->get_neighbors();
-            Tile neighbor = neighbors[rand() % neighbors.size()];
-
-            // Based on job, act accordingly.
-            if(active_cowboy->job == "Bartender")
-            {
-                // Bartenders dispense brews freely, but they still manage to get their due.
-                std::string direction = Tile_::directions[rand() % Tile_::directions.size()];
-                std::cout << "4. Bartender acting on Tile #" << neighbor->id << " with drunkDirection: " << direction << std::endl;
-                active_cowboy->act(neighbor, direction);
-            }
-            else if(active_cowboy->job == "Brawler")
-            {
-                // Brawlers' brains are so pickled, they hardly know friend from foe.
-                // Probably don't ask them act on your behalf.
-                std::cout << "4. Brawlers cannot act" << std::endl;
-            }
-            else if(active_cowboy->job == "Sharpshooter")
-            {
-                // Sharpshooters aren't as quick as they used to be, and all that ruckus around them
-                // requires them to focus when taking aim.
-                if(active_cowboy->focus > 0)
-                {
-                    std::cout << "4. Sharpshooter acting on Tile #" << neighbor->id << std::endl;
-                    active_cowboy->act(neighbor);
-                }
-                else
-                {
-                    std::cout << "4. Sharpshooter doesn't have enough focus. (focus == " << active_cowboy->focus << ")" << std::endl;
-                }
-            }
+            // Try to perform the cowboy's action
+            active_cowboy->act(active_cowboy->tile->tile_west, "East");
         }
     }
 
