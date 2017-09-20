@@ -129,7 +129,11 @@ bool AI::run_turn()
         if (!some_tile->is_balcony)
         {
             // Try to perform the cowboy's action
-            active_cowboy->act(active_cowboy->tile->tile_west, "East");
+            if(active_cowboy->turns_busy <= 0 && active_cowboy->job != "Brawler")
+            {   //Brawler's don't have an action, or at least they act on their own.
+
+                active_cowboy->act(active_cowboy->tile->tile_west, "East");
+            }
         }
     }
 
