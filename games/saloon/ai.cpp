@@ -64,16 +64,6 @@ void AI::ended(bool won, const std::string& reason)
 /// <returns>Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.</returns>
 bool AI::run_turn()
 {
-    // This is "ShellAI", some basic code we've provided that does
-    // everything in the game for demo purposed, but poorly so you
-    // can get to optimizing or overwriting it ASAP
-    //
-    // ShellAI does a few things:
-    // 1. Tries to spawn a new Cowboy
-    // 2. Tries to move to a Piano
-    // 3. Tries to play a Piano
-    // 4. Tries to act
-
     // Notice to CS 1570 students.
     // We use pointers extensively throughout the C++ client
     // If you are not familiar with pointers here's the quick and dirty on what you need to know
@@ -95,7 +85,6 @@ bool AI::run_turn()
         // if this cowboy is not dead then make him our active cowboy we will try to control
         if(!cowboy->is_dead)
         {
-            std::cout << "Cowboy is not dead" << std::endl;
             active_cowboy = cowboy;
             break;
         }
@@ -130,18 +119,10 @@ bool AI::run_turn()
     if(active_cowboy && !active_cowboy->is_dead)
     {
         // Try to move the cowboy north
-        std::cout << "test 1" << std::endl;
         Tile new_tile = active_cowboy->tile->tile_north;
-        std::cout << "test 2" << std::endl;
-
-        std::cout << "new_tile->is_pathable = " << new_tile->is_pathable() << std::endl;
 
         if(active_cowboy->can_move && new_tile->is_pathable())
-        {
-            std::cout << "test 3" << std::endl;
             active_cowboy->move(new_tile);
-            std::cout << "test 4" << std::endl;
-        }
 
         Tile some_tile = active_cowboy->tile->tile_west;
 
