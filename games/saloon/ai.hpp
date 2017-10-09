@@ -74,16 +74,23 @@ public:
     /// <returns>Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.</returns>
     bool run_turn();
 
+
     // <<-- Creer-Merge: methods -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
-    // You can add additional methods here.
+    // you can add additional methods here for your AI to call
+    Cowboy spawn(std::string job);
+    int numCowboys();
+    Tile nearestPiano(Tile tile, std::vector<Tile> tiles);
+    Tile nearestEnemy(Tile tile);
+    int distance(Tile t1, Tile t2);
+
+    const std::vector<std::string> directions{"North", "East", "South", "West"};
+    std::vector<Tile> findPath(Tile start, Tile goal);
+
+
+    void playPianos();
+    void fight();
+    std::vector<Tile> adjacentTiles(Tile t);
     // <<-- /Creer-Merge: methods -->>
-
-/// A very basic path finding algorithm (Breadth First Search) that when given a starting Tile, will return a valid path to the goal Tile.
-/// <param name="start">the starting Tile</param>
-/// <param name="goal">the goal Tile</param>
-/// <return>A List of Tiles representing the path, the the first element being a valid adjacent Tile to the start, and the last element being the goal. Or an empty list if no path found.</return>
-std::vector<Tile> find_path(const Tile& start, const Tile& goal);
-
 
 
     // ####################
