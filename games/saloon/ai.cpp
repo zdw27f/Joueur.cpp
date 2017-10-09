@@ -2,6 +2,7 @@
 // This is where you build your AI
 
 #include "ai.hpp"
+using namespace std;
 
 // <<-- Creer-Merge: includes -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
 // You can add #includes here for your AI.
@@ -74,10 +75,154 @@ bool AI::run_turn()
     // In Data Structures you will learn why
     // And for those on you in Data Structures, we manage the memory of the game objects automatically for you
 
-    std::cout << "Start of my turn: " << this->game->current_turn << std::endl;
+    cout << "Start of my turn: " << this->game->current_turn << endl;
 
+    int brawler = 0;
+    int sharpshooter = 0;
+    int bartender = 0;
+
+    // Obtain the number of each of the types of units
+    for (int i = 0; i < this->player->cowboys.size(); i++)
+    {
+        string cowboys_job = this->player->cowboys[i]->job;
+
+        if (cowboys_job == "Brawler")
+            brawler++;
+        else if (cowboys_job == "Bartender")
+            bartender++;
+        else
+            sharpshooter++;
+    }
+
+    // Grab the young gun
+    Young_gun my_young_gun = this->player->young_gun;
+
+    // Try to spawn in units
+    if (my_young_gun->can_call_in)
+    {
+        // Grabs the young gun's call in tile
+        Tile call_in_tile = my_young_gun->call_in_tile;
+
+        // Checks to make sure that the call in tile doesn't contain anything
+        if (call_in_tile->cowboy == nullptr && !call_in_tile->has_hazard &&
+            call_in_tile->bottle == nullptr && !call_in_tile->furnishing)
+        {
+            if (bartender < game->max_cowboys_per_job)
+            {
+                cout << "Calling in Bartender" << endl;
+                my_young_gun->call_in("Bartender");
+            }
+            else if (sharpshooter < game->max_cowboys_per_job)
+            {
+                cout << "Calling in Sharpshooter" << endl;
+                my_young_gun->call_in("Sharpshooter");
+            }
+            else if (brawler < game->max_cowboys_per_job)
+            {
+                cout << "Calling in Brawler" << endl;
+                my_young_gun->call_in("Brawler");
+            }
+            else
+                cout << "No more units to call in at this time." << endl;
+        }
+
+    }
+
+    // Loop through all the units and have them each do something (if they can)
+    for (int i = 0; i < this->player->cowboys.size(); i++)
+    {
+        // Grab the current cowboy in the cowboy's vector
+        Cowboy current_cowboy = this->player->cowboys[i];
+
+        // Check to make sure we can move the cowboy
+        if (current_cowboy->can_move && !current_cowboy->is_dead &&
+            !current_cowboy->is_drunk && current_cowboy->turns_busy == 0)
+        {
+            // Grab the enemy player
+            Player opponent = this->player->opponent;
+            Tile enemy_tile;
+
+            std::vector<Tile> path;
+
+            if (current_cowboy->job == "Bartender")
+            {
+                int row = current_cowboy->tile->y;
+                bool enemy_found = false;
+                Cowboy possible_enemy;
+
+                // Find an enemy cowboy in the same row as the Bartender
+                for (int col = 0; col < game->map_width; col++)
+                {
+                    if (game->get_tile_at(row, col)->cowboy != nullptr)
+                    {
+                        possible_enemy = game->get_tile_at(row, col)->cowboy;  //Error occurs here
+
+                        // // Check if the cowboy found is an enemy cowboy
+                        // for (int k = 0; k < opponent->cowboys.size(); k++)
+                        // {
+                        //     if (possible_enemy == opponent->cowboys[k])
+                        //     {
+                        //         enemy_found = true;
+                        //         break;
+                        //     }
+                        // }
+                    }
+
+                    if (enemy_found)
+                        break;
+                }
+
+                // // Now possible_enemy is a confirmed enemy if enemy_found is equal to true
+                // if (enemy_found)
+                // {
+                //     Tile tile;
+                //     // Throw a bottle at the enemy unit and have them move in a random direction
+                //     // if they get hit.
+                //     if (possible_enemy->tile->x < current_cowboy->tile->x)
+                //         current_cowboy->act(possible_enemy->tile, tile->directions.at(rand() % tile->directions.size()));
+                // }
+
+            } // End of Bartender if statement
+
+            else if (current_cowboy->job == "Sharpshooter")
+            {
+
+
+            }
+
+            else // current_cowboy == "Brawler"
+            {
+                // Checks if an enemy unit exists to hunt down
+                if (opponent->cowboys.size() > 0)
+                {
+                    path = this->find_path(current_cowboy->tile, opponent->cowboys[0]->tile);
+
+                    // if there is a path, move along it
+                    //      length 0 means no path could be found to the tile
+                    //      length 1 means the enemy is adjacent, and we can't move onto the same tile as the enemy
+                    if (path.size() > 1)
+                    {
+                        cout << "Moving current cowboy to Tile " << path[0]->id << endl;
+                        current_cowboy->move(path[0]);
+                    }
+
+                    // Brawler don't act necessarily, but rather they attack each turn on their own.
+                    else if (path.size() == 1)
+                        cout << "Attacking enemy unit(s) with the one being targeted at tile " << path[0]->id << endl;
+
+                    else
+                        cout << "Couldn't find a path to any enemy units." << endl;
+                }
+
+            } // End of Brawler if statement
+
+        } // End of if checking if you can move the current cowboy
+
+    } // End of for loop that loops through all of your coyboys
+
+    /*
     // Grab one of the cowboys(units) and try to do things with him
-    Cowboy active_cowboy = nullptr;
+    Cowboy current_cowboy = nullptr;
     for(int i = 0; i < this->player->cowboys.size(); i++)
     {
         Cowboy cowboy = this->player->cowboys[i];
@@ -85,7 +230,7 @@ bool AI::run_turn()
         // if this cowboy is not dead then make him our active cowboy we will try to control
         if(!cowboy->is_dead)
         {
-            active_cowboy = cowboy;
+            current_cowboy = cowboy;
             break;
         }
     }
@@ -137,8 +282,9 @@ bool AI::run_turn()
         }
     }
 
-    std::cout << "Ending my turn." << std::endl;
+    */
 
+    std::cout << "Ending my turn." << std::endl;
     return true;
 }
 
