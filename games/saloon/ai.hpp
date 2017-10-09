@@ -42,6 +42,9 @@ public:
 
     //<<-- Creer-Merge: class variables -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     // You can add additional class variables here.
+
+    bool bartender_move_up[2]; // Used to define the units switching between moving up & down on the map.
+    
     //<<-- /Creer-Merge: class variables -->>
 
     /// <summary>

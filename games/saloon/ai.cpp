@@ -35,6 +35,9 @@ void AI::start()
     // <<-- Creer-Merge: start -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     // This is a good place to initialize any variables
     // <<-- /Creer-Merge: start -->>
+    this->bartender_move_up[0] = false;
+    this->bartender_move_up[1] = false;
+
 }
 
 /// <summary>
@@ -45,6 +48,23 @@ void AI::game_updated()
     // <<-- Creer-Merge: game-updated -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     // If a function you call triggers an update this will be called before it returns.
     // <<-- /Creer-Merge: game-updated -->>
+    Cowboy active_cowboy;
+    int counter = 0;
+
+    for (int i = 0; i < this->player->cowboys.size(); i++)
+    {
+        active_cowboy = this->player->cowboys[i];
+
+        if (active_cowboy->job == "Bartender")
+        {
+            if (active_cowboy->tile->tile_north->is_balcony)
+                bartender_move_up[counter] = false;
+            else if (active_cowboy->tile->tile_south->is_balcony)
+                bartender_move_up[counter] = true;
+
+            counter++;
+        }
+    }
 }
 
 /// <summary>
@@ -104,8 +124,8 @@ bool AI::run_turn()
         Tile call_in_tile = my_young_gun->call_in_tile;
 
         // Checks to make sure that the call in tile doesn't contain anything
-        if (call_in_tile->cowboy == nullptr && !call_in_tile->has_hazard &&
-            call_in_tile->bottle == nullptr && !call_in_tile->furnishing)
+        if (!call_in_tile->cowboy && !call_in_tile->has_hazard &&
+            !call_in_tile->bottle && !call_in_tile->furnishing)
         {
             if (bartender < game->max_cowboys_per_job)
             {
@@ -128,6 +148,10 @@ bool AI::run_turn()
 
     }
 
+    // Run the game update section
+    this->game_updated();
+    int bartender_counter = -1;
+
     // Loop through all the units and have them each do something (if they can)
     for (int i = 0; i < this->player->cowboys.size(); i++)
     {
@@ -146,6 +170,31 @@ bool AI::run_turn()
 
             if (current_cowboy->job == "Bartender")
             {
+                bartender_counter++;
+                Tile cowboys_north_tile = current_cowboy->tile->tile_north;
+                Tile cowboys_south_tile = current_cowboy->tile->tile_south;
+
+                // Get the Bartender to move up or down
+                if (this->bartender_move_up[bartender_counter] && !cowboys_north_tile->bottle &&
+                    !cowboys_north_tile->cowboy && !cowboys_north_tile->furnishing && !cowboys_north_tile->is_balcony)
+                {
+                    if (current_cowboy->move(current_cowboy->tile->tile_north))
+                    {
+                        cout << "Moving cowboy " << current_cowboy->id << " moved to tile ";
+                        cout << current_cowboy->tile->tile_north->id << endl;
+                    }
+                }
+                else if (!cowboys_south_tile->bottle && !cowboys_south_tile->cowboy &&
+                        !cowboys_south_tile->furnishing && !cowboys_south_tile->is_balcony)
+                {
+                    if (current_cowboy->move(current_cowboy->tile->tile_south))
+                    {
+                        cout << "Moving cowboy " << current_cowboy->id << " moved to tile ";
+                        cout << current_cowboy->tile->tile_south->id << endl;
+                    }
+                }
+
+                // Variables used with finding an enemy
                 int row = current_cowboy->tile->y;
                 bool enemy_found = false;
                 Cowboy possible_enemy;
@@ -153,34 +202,36 @@ bool AI::run_turn()
                 // Find an enemy cowboy in the same row as the Bartender
                 for (int col = 0; col < game->map_width; col++)
                 {
-                    if (game->get_tile_at(row, col)->cowboy != nullptr)
+                    if (game->get_tile_at(col, row)->cowboy != nullptr)
                     {
-                        possible_enemy = game->get_tile_at(row, col)->cowboy;  //Error occurs here
+                        possible_enemy = game->get_tile_at(col, row)->cowboy;
 
                         // // Check if the cowboy found is an enemy cowboy
-                        // for (int k = 0; k < opponent->cowboys.size(); k++)
-                        // {
-                        //     if (possible_enemy == opponent->cowboys[k])
-                        //     {
-                        //         enemy_found = true;
-                        //         break;
-                        //     }
-                        // }
+                        if (possible_enemy->owner != this->player)
+                        {
+                            enemy_found = true;
+                            break;
+                        }
                     }
-
-                    if (enemy_found)
-                        break;
                 }
 
-                // // Now possible_enemy is a confirmed enemy if enemy_found is equal to true
-                // if (enemy_found)
-                // {
-                //     Tile tile;
-                //     // Throw a bottle at the enemy unit and have them move in a random direction
-                //     // if they get hit.
-                //     if (possible_enemy->tile->x < current_cowboy->tile->x)
-                //         current_cowboy->act(possible_enemy->tile, tile->directions.at(rand() % tile->directions.size()));
-                // }
+                // Now possible_enemy is a confirmed enemy if enemy_found is equal to true
+                if (enemy_found)
+                {
+                    Tile tile;
+                    // Throw a bottle at the enemy unit and have them move in a random direction
+                    // if they get hit.
+                    if (possible_enemy->tile->x < current_cowboy->tile->x)
+                    {
+                        if (current_cowboy->act(current_cowboy->tile->tile_west, tile->directions.at(rand() % tile->directions.size())))
+                            cout << "Cowboy " << current_cowboy->id << " throwing a bottle in west direction." << endl;
+                    }
+                    else
+                    {
+                        if (current_cowboy->act(current_cowboy->tile->tile_east, tile->directions.at(rand() % tile->directions.size())))
+                            cout << "Cowboy " << current_cowboy->id << " throwing a bottle in east direction." << endl;
+                    }
+                }
 
             } // End of Bartender if statement
 
@@ -202,8 +253,8 @@ bool AI::run_turn()
                     //      length 1 means the enemy is adjacent, and we can't move onto the same tile as the enemy
                     if (path.size() > 1)
                     {
-                        cout << "Moving current cowboy to Tile " << path[0]->id << endl;
-                        current_cowboy->move(path[0]);
+                        if (current_cowboy->move(path[0]))
+                            cout << "Moving current cowboy to Tile " << path[0]->id << endl;
                     }
 
                     // Brawler don't act necessarily, but rather they attack each turn on their own.
